@@ -153,6 +153,9 @@ int run_server (uint16_t port)
 		{
 			return EXIT_FAILURE;
 		}
+		
+		int stat_loc;
+		while (-1 != waitpid (-1, &stat_loc, WNOHANG)); // get rid of zomies
 	}
 	
 	return EXIT_SUCCESS;
