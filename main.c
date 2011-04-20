@@ -10,15 +10,18 @@
 #define MAX_FILENAME 1024
 #define CAT_BUFFER_SIZE 1024
 
+#define countof(x) sizeof(x)/sizeof(x[0])
+
 void usage()
 {
+	static const char USAGE_LINE[] = "USAGE: myserver [ <port> | -h ]. Default port is 1025.\n";
 	MY* my_out = myrl_fromfd (2);
 	if (!my_out)
 	{
 		return;
 	}
 	
-	myrl_writeline (my_out, "USAGE: myserver [ <port> | -h ]. Default port is 1025.\n", 10); //!!!!!!
+	myrl_writeline (my_out, USAGE_LINE, countof(USAGE_LINE));
 	myrl_close (my_out);
 }
 
