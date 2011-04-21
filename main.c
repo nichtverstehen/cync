@@ -5,6 +5,9 @@
 #include <stdint.h>
 #include <netinet/in.h>
 #include <errno.h>
+#include <signal.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include "myreadline.h"
 
 #define LISTEN_QUEUE_SIZE 1
