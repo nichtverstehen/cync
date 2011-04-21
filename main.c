@@ -8,7 +8,7 @@
 #include "myreadline.h"
 
 #define LISTEN_QUEUE_SIZE 1
-#define MAX_FILENAME 1024
+#define MAX_FILENAME 100
 #define CAT_BUFFER_SIZE 1024
 
 #define countof(x) (sizeof (x) / sizeof (x[0]))
@@ -86,6 +86,12 @@ int cat_file (int client, const char* filename)
 	return status;
 }
 
+int is_safe_filename(const char* filename)
+{
+	// should check also for ../
+	return filename[0] != '/';
+}
+
 /* process a command from client */
 int process_client_line (int client, MY* my_client)
 {
@@ -93,6 +99,13 @@ int process_client_line (int client, MY* my_client)
 	RES r;
 
 	r = myrl_readline (my_client, buffer, MAX_FILENAME);
+	
+	if (MYRL_RES (r) == -1 && MYRL_ERR (r) == 1)
+	{
+		// overflow, skip it
+		myrl_skipline (my_client);
+		return 1;
+	}
 	
 	if (MYRL_RES (r) == 0)
 	{
@@ -109,10 +122,13 @@ int process_client_line (int client, MY* my_client)
 		}
 		
 		buffer[len] = 0;
-		
-		if (cat_file (client, buffer) >= 0)
+	
+		if( is_safe_filename(buffer) )
 		{
-			return 1;
+			if (cat_file (client, buffer) >= 0)
+			{
+				return 1;
+			}
 		}
 	}
 	
@@ -125,7 +141,7 @@ int interact (int client)
 	MY* my_client = NULL;
 	int r = -1;
 	
-	my_client = myrl_fromfd (client);
+	my_client = myrl_fromfd2 (client, MYRL_NOCLOSE);
 	if (my_client)
 	{
 		do
@@ -138,11 +154,7 @@ int interact (int client)
 		myrl_close (my_client);
 	}
 	
-	if (!my_client)
-	{
-		close (client);
-	}
-		
+	close (client);
 	return r != 0 ? -1 : 0;
 }
 
