@@ -11,7 +11,7 @@
 #include "myreadline.h"
 
 #define LISTEN_QUEUE_SIZE 1
-#define MAX_FILENAME 100
+#define MAX_FILENAME 1024
 #define CAT_BUFFER_SIZE 1024
 
 #define countof(x) (sizeof (x) / sizeof (x[0]))
