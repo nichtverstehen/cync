@@ -31,6 +31,7 @@ void usage()
 	myrl_close (my_out);
 }
 
+/* feed a buffer to fd */
 int cat_buffer (int client, const char* buffer, size_t cb)
 {
 	size_t written = 0;
@@ -51,6 +52,7 @@ int cat_buffer (int client, const char* buffer, size_t cb)
 	return 0;
 }
 
+/* feed a file to fd */
 int cat_file (int client, const char* filename)
 {
 	char buffer[CAT_BUFFER_SIZE];
