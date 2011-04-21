@@ -13,12 +13,7 @@
 
 #define countof(x) (sizeof (x) / sizeof (x[0]))
 
-void sigchld_handler (int s)
-{
-    while (waitpid (-1, NULL, WNOHANG) > 0);
-}
-
-void usage()
+void usage ()
 {
 	static const char USAGE_LINE[] = "USAGE: myserver [ <port> | -h ]. Default port is 1025.\n";
 	MY* my_out = myrl_fromfd (2);
@@ -63,23 +58,27 @@ int cat_file (int client, const char* filename)
 	fd = open (filename, O_RDONLY);
 	if (fd >= 0)
 	{
-		status = 0;
 		do
 		{
+			status = -1; // failed unless otherwise
 			read_cb = read (fd, buffer, CAT_BUFFER_SIZE);
-			if (read_cb < 0)
+			
+			if (read_cb == 0)
 			{
-				status = -1;
+				// eof
+				status = 0;
 				break;
 			}
 			
-			if (cat_buffer (client, buffer, read_cb) < 0)
+			if (read_cb > 0)
 			{
-				status = -1;
-				break;
+				if (cat_buffer (client, buffer, read_cb) >= 0)
+				{
+					status = 0;
+				}
 			}
 		}
-		while (read_cb > 0);
+		while (status == 0);
 		
 		close (fd);
 	}
@@ -174,6 +173,11 @@ int process_client (int server, int client)
 		close (client);
 		return pid != -1;
 	}
+}
+
+static void sigchld_handler (int s)
+{
+    while (waitpid (-1, NULL, WNOHANG) > 0);
 }
 
 /* set handler to wait for children */
