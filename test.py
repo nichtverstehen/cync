@@ -10,7 +10,7 @@ if p is None: exit()
 
 for fn in ['foo', 'bar', 'caz']:
 	with open(fn,'w') as f:
-		f.write(fn[0]*10000)
+		f.write(fn[0]*30000)
 
 time.sleep(1)
 
@@ -39,8 +39,8 @@ f1(s2)
 		
 def f2(s):
 	s.sendall('caz\n')
-	d = recvall(s, 25000)
-	if d != 'f'*5000 + 'b'*10000 + 'c'*10000:
+	d = recvall(s, 85000)
+	if d != 'f'*25000 + 'b'*30000 + 'c'*30000:
 		print 'FAIL 2'
 
 f2(s)
