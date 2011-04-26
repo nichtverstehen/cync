@@ -3,11 +3,16 @@
 
 #include "mlist.h"
 
-#define CHECK_FAIL(x, msg) do { if (!(x)) fail (msg); } while (0)
+#define CHECK_FAIL(x, msg) do { if (x) ok (msg, __FUNCTION__); else fail (msg, __FUNCTION__); } while (0)
 
-void fail (char* msg)
+void ok (const char* msg, const char* fun)
 {
-	fprintf (stderr, "FAILED: %s\n", msg);
+	fprintf (stderr, "PASSED: %s:%s\n", fun, msg);
+}
+
+void fail (const char* msg, const char* fun)
+{
+	fprintf (stderr, "FAILED: %s:%s\n", fun, msg);
 	exit (1);
 }
 
@@ -33,8 +38,10 @@ void test_mlist ()
 	CHECK_FAIL (mlist_add (l, &a) == 0, "add element");
 	CHECK_FAIL (mlist_len (l) == 1, "added element");
 	CHECK_FAIL (l[0] == 1, "added element value");
+	mlist_remove (l, 0);
+	CHECK_FAIL (mlist_len (l) == 0, "remove single element");
 	
-	for (i = 2; i <= 16; ++i)
+	for (i = 1; i <= 16; ++i)
 	{
 		mlist_add (l, &i);
 	}
@@ -53,6 +60,10 @@ void test_mlist ()
 	
 	int as2[] = { 16, 2, 3, 4, 7, 6 };
 	CHECK_FAIL (compare_list (l, as2, countof (as2)) == 0, "remove 5-13");
+	
+	int* l1 = mlist_clone (l);
+	CHECK_FAIL (compare_list (l1, as2, countof (as2)) == 0, "clone");
+	mlist_delete (l1);
 
 	mlist_remove (l, 5);
 	int as3[] = { 16, 2, 3, 4, 7 };
@@ -64,9 +75,16 @@ void test_mlist ()
 	struct X* xs = mlist_new (struct X);
 	CHECK_FAIL (xs, "struct list");
 	struct X x1 = { 1, 2 };
+	mlist_reserve (xs, 10);
+	CHECK_FAIL (10 == mlist_capacity (xs), "reserved 10");
+	
 	CHECK_FAIL (0 == mlist_add (xs, &x1), "add struct");
 	CHECK_FAIL (1 == mlist_len (xs), "added struct");
 	CHECK_FAIL (0 == memcmp (&x1, &xs[0], sizeof (x1)), "struct valid");
+	
+	mlist_reserve (xs, 0);
+	CHECK_FAIL (1 == mlist_len (xs) && 0 == memcmp (&x1, &xs[0], sizeof (x1)), "non destructive reserve");
+	
 	mlist_delete (xs);
 }
 
