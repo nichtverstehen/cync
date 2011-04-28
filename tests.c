@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <fcntl.h>
 
 #include "mlist.h"
 #include "hstack.h"
@@ -198,7 +199,7 @@ a_Function (async_func, { hstack_t* checker; })
 
 	printf ("f2");
 	
-	a_End;
+	a_EndR(13);
 }
 
 a_Function (async_tester, { hstack_t* checker; })
@@ -221,7 +222,7 @@ a_Function (async_tester, { hstack_t* checker; })
 	
 	printf ("m3");
 	
-	aLoc.chargs.checkpoint = 3; aLoc.chargs.cont = aStack;
+	aLoc.chargs.checkpoint = aRet == 13 ? 3 : -1; aLoc.chargs.cont = aStack;
 	a_Continue (*aArg.checker, (intptr_t) &aLoc.chargs);
 	*aArg.checker = aLoc.chargs.check;
 	
@@ -249,11 +250,54 @@ void test_async ()
 	CHECK (status == 4, "async finished");
 }
 
+a_Function (async_reader, { int fd; char* dest; int count; })
+{
+	a_Local {
+		int have_read;
+	};
+	
+	a_Begin;
+	aLoc.have_read = 0;
+	
+	while (aLoc.have_read < aArg.count)
+	{
+		a_Call(async_read, aArg.fd, aArg.dest + aLoc.have_read, aArg.count - aLoc.have_read);
+		if (aRet <= 0)
+		{
+			printf("break %d\n", (int) aRet);
+			break;
+		}
+		
+		aLoc.have_read += aRet;
+	}
+	
+	a_End;
+}
+
+void test_io()
+{
+	int fd = open("a", O_RDONLY);
+	if (fd < 0) return;
+	
+	char str[129];
+	hstack_t astack = hstack_new ();
+	async_init_stack (astack, async_reader, fd, str, 128);
+	
+	int r = async_ioloop (astack);
+	
+	CHECK (r >= 0, "ioloop");
+	str[128] = 0;
+	printf ("%s\n", str);
+	
+	close(fd);
+}
+
 int main (int argc, void** argv)
 {
 	test_mlist ();
 	test_hstack ();
 	test_async ();
+	test_io ();
 	
 	fprintf (stderr, "SUCCESS\n");
 	exit (0);
