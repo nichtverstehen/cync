@@ -3,6 +3,7 @@
 
 #include "mlist.h"
 #include "hstack.h"
+#include "async.h"
 
 #define CHECK(x, msg) do { if (x) ok (msg, __FUNCTION__, __LINE__); \
 	else fail (msg, __FUNCTION__, __LINE__); } while (0)
@@ -117,6 +118,15 @@ void test_hstack ()
 		CHECK_FAIL (*top == arr[i], "pushed element");
 	}
 	
+	for (i = 0; i < countof(arr); ++i)
+	{
+		int64_t* nth = hstack_nth(st, i, NULL);
+		CHECK_FAIL (nth && *nth == arr[countof (arr) - i - 1], "nth");
+	}
+	
+	pi1 = hstack_nth(st, countof(arr), NULL);
+	CHECK (!pi1, "nth oob");
+	
 	for (i = countof(arr) - 1; i --> 0; )
 	{
 		CHECK_FAIL (hstack_pop (st) == 0, "pop element");
@@ -130,10 +140,119 @@ void test_hstack ()
 	hstack_delete (st);
 }
 
-int main ()
+struct checker_args_t
+{
+	int checkpoint;
+	hstack_t cont;
+	hstack_t check;
+};
+
+#define checker_point(point) \
+	if (*aArg.status != -1 && point == *aArg.status + 1) *aArg.status = point;
+
+#define checker_step() \
+	args = (void*) aRet; \
+	checker_point (args->checkpoint); \
+	args->check = aStack;
+
+a_Function (async_checker, { int* status; })
+{
+	static const int expect[] = { 1, 2, 10, 1, 3 };
+	struct checker_args_t* args;
+	
+	a_Begin;
+	*aArg.status = 0;
+	
+	printf ("c1");
+	checker_step();
+	async_continue (args->cont, 0);
+	
+	printf ("c2");
+	checker_step();
+	async_continue (args->cont, 0);
+	
+	printf ("c3");
+	checker_step();
+	async_continue (args->cont, 0);
+	
+	printf ("c4");
+	checker_point(4);
+	
+	a_End;
+}
+
+a_Function (async_func, { hstack_t* checker; })
+{
+	a_Local {
+		struct checker_args_t chargs;
+	};
+	
+	a_Begin;
+	
+	printf ("f1");
+	
+	aLoc.chargs.checkpoint = 2; aLoc.chargs.cont = aStack;
+	async_continue (*aArg.checker, (intptr_t) &aLoc.chargs);
+	*aArg.checker = aLoc.chargs.check;
+
+	printf ("f2");
+	
+	a_End;
+}
+
+a_Function (async_tester, { hstack_t* checker; })
+{
+	a_Local {
+		struct checker_args_t chargs;
+	};
+	
+	a_Begin;
+	
+	printf ("m1");
+	
+	aLoc.chargs.checkpoint = 1; aLoc.chargs.cont = aStack;
+	async_continue (*aArg.checker, (intptr_t) &aLoc.chargs);
+	*aArg.checker = aLoc.chargs.check;
+	
+	printf ("m2");
+	
+	a_Call (async_func, aArg.checker);
+	
+	printf ("m3");
+	
+	aLoc.chargs.checkpoint = 3; aLoc.chargs.cont = aStack;
+	async_continue (*aArg.checker, (intptr_t) &aLoc.chargs);
+	*aArg.checker = aLoc.chargs.check;
+	
+	printf ("m4");
+	
+	a_End;
+}
+
+void test_async ()
+{
+	int status = 0;
+	hstack_t check_stack = hstack_new();
+	async_init_stack (check_stack, async_checker, &status);
+	
+	hstack_t test_stack = hstack_new();
+	async_init_stack (test_stack, async_tester, &check_stack);
+	
+	int test_status = async_run_stack (test_stack);
+	int check_status = async_run_stack (check_stack);
+	
+	printf("\n");
+	CHECK (0 == test_status, "async run test");
+	CHECK (0 == check_status, "async run checker");
+	
+	CHECK (status == 4, "async finished");
+}
+
+int main (int argc, void** argv)
 {
 	test_mlist ();
 	test_hstack ();
+	test_async ();
 	
 	fprintf (stderr, "SUCCESS\n");
 	exit (0);
