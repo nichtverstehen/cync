@@ -2,10 +2,10 @@ MYREADLINE = ../myreadline
 CFLAGS += -I$(MYREADLINE)
 LDFLAGS += -L$(MYREADLINE)
 
-all: myserver
+all: myserver1
 
-myserver: main.o
+myserver1: myserver1.o
 	$(CC) $(LDFLAGS) $+ $(MYREADLINE)/myreadline.a -o $@
 	
 clean:
-	rm -f *.o *.so *.a myserver
+	rm -f *.o *.so *.a myserver1
