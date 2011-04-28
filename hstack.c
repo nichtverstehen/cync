@@ -84,10 +84,19 @@ void* hstack_push2 (hstack_t* phstack, void* elem, size_t elsize)
 	size_t framesize = sizeof (struct hstack_frame_t) + elsize;
 	struct hstack_frame_t* dummyframe = (struct hstack_frame_t*) ((char*) topframe + framesize);
 	
-	memcpy (GET_FRAMEDATA (topframe), elem, elsize);
 	dummyframe->prev_offset = framesize;
 	hstack->head += framesize;
+	if (elem)
+	{
+		memcpy (GET_FRAMEDATA (topframe), elem, elsize);
+	}
+	
 	return GET_FRAMEDATA (topframe);
+}
+
+void* hstack_push0 (hstack_t* phstack, size_t elsize)
+{
+	return hstack_push2 (phstack, NULL, elsize);
 }
 
 int hstack_pop2 (hstack_t* phstack)
