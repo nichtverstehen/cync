@@ -10,6 +10,7 @@
 
 struct mlist_header_t
 {
+	size_t elsize;
 	size_t len;
 	size_t capacity;
 };
@@ -25,6 +26,7 @@ void* mlist_new2 (size_t elsize)
 	}
 	
 	void* data = &mlist[1];
+	mlist->elsize = elsize;
 	mlist->len = 0;
 	mlist->capacity = MLIST_MIN_LEN;
 	return data;
@@ -48,18 +50,19 @@ size_t mlist_capacity (const void* list)
 	return mlist->capacity;
 }
 
-void* mlist_clone2 (const void* list, size_t elsize)
+void* mlist_clone (const void* list)
 {
 	const struct mlist_header_t* mlist = GET_MLIST (list);
-	const size_t cbs = sizeof (struct mlist_header_t) + elsize * mlist->len;
+	const size_t cbs = sizeof (struct mlist_header_t) + mlist->elsize * mlist->len;
 	struct mlist_header_t* newlist = malloc (cbs);
 	memcpy (newlist, mlist, cbs);
 	return &newlist[1];
 }
 
-int mlist_grow (void** list, size_t newsize, size_t elsize)
+int mlist_grow (void** list, size_t newsize)
 {
 	struct mlist_header_t* mlist = GET_MLIST (*list);
+	const size_t elsize = mlist->elsize;
 	const size_t maxelements = (SIZE_MAX - sizeof (struct mlist_header_t)) / elsize;
 	if (newsize > maxelements)
 	{
@@ -80,6 +83,7 @@ int mlist_grow (void** list, size_t newsize, size_t elsize)
 ssize_t mlist_add2 (void** list, const void* pel, size_t elsize)
 {
 	struct mlist_header_t* mlist = GET_MLIST (*list);
+	ASSERT (mlist->elsize == elsize);
 	ASSERT (mlist->len <= mlist->capacity);
 	
 	if (mlist->len >= SSIZE_MAX)
@@ -90,7 +94,7 @@ ssize_t mlist_add2 (void** list, const void* pel, size_t elsize)
 	if (mlist->capacity == mlist->len)
 	{
 		size_t newsize = mlist->capacity < (SIZE_MAX >> 1) ? mlist->capacity << 1 : SIZE_MAX;
-		if (mlist_grow (list, newsize, elsize) < 0)
+		if (mlist_grow (list, newsize) < 0)
 		{
 			return -1;
 		}
@@ -109,6 +113,7 @@ void mlist_remove2 (void** list, size_t pos, size_t elsize)
 {
 	struct mlist_header_t* mlist = GET_MLIST (*list);
 	ASSERT (pos < mlist->len);
+	ASSERT (mlist->elsize == elsize);
 	ASSERT (mlist->len <= mlist->capacity);
 	
 	if (pos < mlist->len - 1)
@@ -121,7 +126,7 @@ void mlist_remove2 (void** list, size_t pos, size_t elsize)
 	
 	if (mlist->len <= (mlist->capacity >> 1) && (mlist->capacity >> 1) >= MLIST_MIN_LEN )
 	{
-		mlist_grow (list, mlist->capacity >> 1, elsize);
+		mlist_grow (list, mlist->capacity >> 1);
 		/* not fatal to fail shrinking */
 	}
 }
@@ -129,11 +134,12 @@ void mlist_remove2 (void** list, size_t pos, size_t elsize)
 void mlist_reserve2 (void** list, size_t len, size_t elsize)
 {
 	struct mlist_header_t* mlist = GET_MLIST (*list);
+	ASSERT (mlist->elsize == elsize);
 	
 	if (mlist->capacity > len || len < mlist->len)
 	{
 		return;
 	}
 	
-	mlist_grow (list, len, elsize);
+	mlist_grow (list, len);
 }

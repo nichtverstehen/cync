@@ -8,13 +8,12 @@
 
 #define MLIST_MIN_LEN 1
 
-#define /* T* */ mlist_new(T) mlist_new2 (sizeof (T))
+#define /* T* */ mlist_new(T) (T*) mlist_new2 (sizeof (T))
 void* mlist_new2 (size_t elsize);
 void mlist_delete (void* list);
 size_t mlist_len (const void* list);
 size_t mlist_capacity (const void* list);
-#define /* T* */ mlist_clone(list) mlist_clone2 (list, sizeof (list[0]))
-void* mlist_clone2 (const void* list, size_t elsize);
+void* mlist_clone (const void* list);
 
 /* can returns index or -1. may change list ptr */
 #define /* ssize_t */ mlist_add(list, pel) mlist_add_(list, pel)
@@ -30,9 +29,9 @@ void mlist_reserve2 (void** list, size_t len, size_t elsize);
 
 /* some rudimentary type checking */
 #define MLIST_ASSERT_SAME_TYPE(a, b) ( \
-(0 ? a : b), \
-(struct { char dummy_[sizeof (a) == sizeof (b) ? 1 : -1]; } *) 0 \
-)
+		(0 ? a : b), \
+		(struct { char dummy_[sizeof (a) == sizeof (b) ? 1 : -1]; } *) 0 \
+	)
 
 #define /* ssize_t */ mlist_add_(list, pel) ( \
 		MLIST_ASSERT_SAME_TYPE (*list, *pel), \
