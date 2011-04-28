@@ -21,6 +21,7 @@ void* hstack_push0 (hstack_t* phstack, size_t elsize);
 int hstack_pop2 (hstack_t* phstack);
 
 /* returns pointer to top or NULL if empty */
-void* hstack_top (chstack_t hstack, /* opt, out */ size_t* elsize);
+void* hstack_top (chstack_t hstack, /* opt, out */ size_t* pelsize);
+void* hstack_nth (chstack_t hstack, size_t n, /* opt, out */ size_t* pelsize);
 
 #endif

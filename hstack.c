@@ -114,24 +114,34 @@ int hstack_pop2 (hstack_t* phstack)
 	return 0;
 }
 
-void* hstack_top (chstack_t hstack, /* opt, out */ size_t* elsize)
-{	
-	const struct hstack_frame_t* topframe = GET_TOPFRAME (hstack);
-	const size_t topelement_size = topframe->prev_offset;
+void* hstack_top (chstack_t hstack, /* opt, out */ size_t* pelsize)
+{
+	return hstack_nth (hstack, 0, pelsize);
+}
+
+void* hstack_nth (chstack_t hstack, size_t n, /* opt, out */ size_t* pelsize)
+{
+	size_t elsize = 0;
+	const struct hstack_frame_t* frame = GET_TOPFRAME (hstack);
 	
-	if (topelement_size == 0)
+	do
 	{
-		/* no previous frame */
-		return NULL;
+		elsize = frame->prev_offset;
+	
+		if (elsize == 0)
+		{
+			/* no previous frame */
+			return NULL;
+		}
+		
+		frame = GET_PREVFRAME (frame);
+	}
+	while (n-- > 0);
+
+	if (pelsize)
+	{
+		*pelsize = elsize - sizeof (struct hstack_frame_t);
 	}
 	
-	const struct hstack_frame_t* topelement = GET_PREVFRAME (topframe);
-	void* data = (void*) GET_FRAMEDATA (topelement);
-	
-	if (elsize)
-	{
-		*elsize = topelement_size - sizeof (struct hstack_frame_t);
-	}
-	
-	return data;
+	return (void*) GET_FRAMEDATA (frame);
 }
