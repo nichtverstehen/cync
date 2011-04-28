@@ -52,6 +52,16 @@ int async_run_stack (hstack_t stack);
 		locals_ = hstack_push0 (*stack_, sizeof (struct async_locals_t_)); \
 		if (!locals_) return -1;
 
+#define a_Return(/* intptr_t */ x) \
+	async_fixret (*stack_, 1, x); \
+	hstack_pop (*stack_); \
+	return 0;
+
+#define a_EndR(/* intptr_t */ x) \
+		async_fixret (*stack_, 1, x); \
+		hstack_pop (*stack_); \
+	} return 0;
+
 #define a_End \
 		hstack_pop (*stack_); \
 	} return 0;
@@ -65,7 +75,7 @@ int async_run_stack (hstack_t stack);
 
 /* take care of your stack */
 #define a_Continue(hstack, ret) { \
-		if (async_fixret (hstack, ret) < 0) return -1; \
+		if (async_fixret (hstack, 0, ret) < 0) return -1; \
 		frame_->callee.line = __LINE__; \
 		*stack_ = hstack; \
 		return 3; \
@@ -76,7 +86,7 @@ int async_run_stack (hstack_t stack);
 		return 1; \
 	}; case __LINE__:
 
-int async_fixret (hstack_t hstack, intptr_t ret);
+int async_fixret (hstack_t hstack, size_t depth, intptr_t ret);
 
 /* async function return values:
  -1 - fatal error. stack in undefined state. stack is deallocated by engine

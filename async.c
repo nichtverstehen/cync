@@ -52,9 +52,9 @@ exit:
 }
 
 /* place a continuation return value in the top frame */
-int async_fixret (hstack_t hstack, intptr_t ret)
+int async_fixret (hstack_t hstack, size_t depth, intptr_t ret)
 {
-	struct async_callinfo_t* callee = hstack_nth (hstack, 1, NULL);
+	struct async_callinfo_t* callee = hstack_nth (hstack, depth*2 + 1, NULL);
 	if (!callee)
 	{
 		return -1;
