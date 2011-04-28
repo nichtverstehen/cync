@@ -1,3 +1,6 @@
+#ifndef mlist_h__
+#define mlist_h__
+
 #include <stddef.h>
 #include <sys/types.h>
 
@@ -37,3 +40,5 @@ void mlist_reserve2 (void** list, size_t len, size_t elsize);
 		MLIST_ASSERT_SAME_TYPE (*list, *pel), \
 		mlist_add2 ((void**) &list, pel, sizeof (list[0])) /* malloc-aligned anyway */ \
 	)
+
+#endif

@@ -1,3 +1,6 @@
+#ifndef hstack_h__
+#define hstack_h__
+
 #include <stddef.h>
 
 typedef struct hstack_header_t *hstack_t;
@@ -19,3 +22,5 @@ int hstack_pop2 (hstack_t* phstack);
 
 /* returns pointer to top or NULL if empty */
 void* hstack_top (chstack_t hstack, /* opt, out */ size_t* elsize);
+
+#endif
