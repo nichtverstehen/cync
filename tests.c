@@ -4,6 +4,7 @@
 #include "mlist.h"
 #include "hstack.h"
 #include "async.h"
+#include "async_io.h"
 
 #define CHECK(x, msg) do { if (x) ok (msg, __FUNCTION__, __LINE__); \
 	else fail (msg, __FUNCTION__, __LINE__); } while (0)
@@ -165,15 +166,15 @@ a_Function (async_checker, { int* status; })
 	
 	printf ("c1");
 	checker_step();
-	async_continue (args->cont, 0);
+	a_Continue (args->cont, 0);
 	
 	printf ("c2");
 	checker_step();
-	async_continue (args->cont, 0);
+	a_Continue (args->cont, 0);
 	
 	printf ("c3");
 	checker_step();
-	async_continue (args->cont, 0);
+	a_Continue (args->cont, 0);
 	
 	printf ("c4");
 	checker_point(4);
@@ -192,7 +193,7 @@ a_Function (async_func, { hstack_t* checker; })
 	printf ("f1");
 	
 	aLoc.chargs.checkpoint = 2; aLoc.chargs.cont = aStack;
-	async_continue (*aArg.checker, (intptr_t) &aLoc.chargs);
+	a_Continue (*aArg.checker, (intptr_t) &aLoc.chargs);
 	*aArg.checker = aLoc.chargs.check;
 
 	printf ("f2");
@@ -211,7 +212,7 @@ a_Function (async_tester, { hstack_t* checker; })
 	printf ("m1");
 	
 	aLoc.chargs.checkpoint = 1; aLoc.chargs.cont = aStack;
-	async_continue (*aArg.checker, (intptr_t) &aLoc.chargs);
+	a_Continue (*aArg.checker, (intptr_t) &aLoc.chargs);
 	*aArg.checker = aLoc.chargs.check;
 	
 	printf ("m2");
@@ -221,7 +222,7 @@ a_Function (async_tester, { hstack_t* checker; })
 	printf ("m3");
 	
 	aLoc.chargs.checkpoint = 3; aLoc.chargs.cont = aStack;
-	async_continue (*aArg.checker, (intptr_t) &aLoc.chargs);
+	a_Continue (*aArg.checker, (intptr_t) &aLoc.chargs);
 	*aArg.checker = aLoc.chargs.check;
 	
 	printf ("m4");

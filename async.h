@@ -28,14 +28,6 @@ int async_run_stack (hstack_t stack);
 		hstack_push0 (hstack, 0); /* dummy locals */ \
 	} while (0)
 
-/* take care of your stack */
-#define async_continue(hstack, ret) { \
-		if (async_fixret (hstack, ret) < 0) return -1; \
-		frame_->callee.line = __LINE__; \
-		*stack_ = hstack; \
-		return 3; \
-	}; case __LINE__:
-
 #define aStack (*stack_)
 #define aArg (frame_->usr)
 #define aLoc (*locals_)
@@ -69,6 +61,19 @@ int async_run_stack (hstack_t stack);
 		struct fun##_frame_t_ subframe = { { 0, (async_fun_t) &fun##_async_, 0, 0 }, { __VA_ARGS__ } }; \
 		if (!hstack_push (*stack_, &subframe)) return -1; \
 		return 2; \
+	}; case __LINE__:
+
+/* take care of your stack */
+#define a_Continue(hstack, ret) { \
+		if (async_fixret (hstack, ret) < 0) return -1; \
+		frame_->callee.line = __LINE__; \
+		*stack_ = hstack; \
+		return 3; \
+	}; case __LINE__:
+
+#define a_Junction() { \
+		frame_->callee.line = __LINE__; \
+		return 1; \
 	}; case __LINE__:
 
 int async_fixret (hstack_t hstack, intptr_t ret);
