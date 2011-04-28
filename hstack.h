@@ -12,9 +12,9 @@ hstack_t hstack_new2 (size_t capacity);
 void hstack_delete(hstack_t hstack);
 
 #define /* T* */ hstack_push(hstack, pel) hstack_push2 (&hstack, pel, sizeof (*pel))
+#define /* T* */ hstack_push0(hstack, elsize) hstack_push2 (&hstack, NULL, elsize)
 /* returns pointer to pushed element or NULL */
 void* hstack_push2 (hstack_t* phstack, void* elem, size_t elsize);
-void* hstack_push0 (hstack_t* phstack, size_t elsize);
 
 /* 0 or -1 is stack is empty */
 #define /* int */ hstack_pop(hstack) hstack_pop2 (&hstack)

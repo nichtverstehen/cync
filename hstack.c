@@ -90,13 +90,13 @@ void* hstack_push2 (hstack_t* phstack, void* elem, size_t elsize)
 	{
 		memcpy (GET_FRAMEDATA (topframe), elem, elsize);
 	}
+	else
+	{
+		memset (GET_FRAMEDATA (topframe), 0, elsize);
+	}
+
 	
 	return GET_FRAMEDATA (topframe);
-}
-
-void* hstack_push0 (hstack_t* phstack, size_t elsize)
-{
-	return hstack_push2 (phstack, NULL, elsize);
 }
 
 int hstack_pop2 (hstack_t* phstack)
