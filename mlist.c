@@ -59,7 +59,7 @@ void* mlist_clone (const void* list)
 	return &newlist[1];
 }
 
-int mlist_grow (void** list, size_t newsize)
+static int mlist_grow (void** list, size_t newsize)
 {
 	struct mlist_header_t* mlist = GET_MLIST (*list);
 	const size_t elsize = mlist->elsize;
