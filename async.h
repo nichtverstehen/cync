@@ -1,3 +1,4 @@
+/* Cyril Nikolaev */
 #ifndef async_h__
 #define async_h__
 
@@ -20,7 +21,7 @@ struct async_locals_t_ { };
 
 /* run frame on top of stack. acquires the stack
  returns async function result (-1, 0, 1), see below */
-int async_run_stack (hstack_t stack);
+int async_run_stack (hstack_t stack, intptr_t* ret);
 
 #define async_init_stack(hstack, fun, ...) do { \
 		struct fun##_frame_t_ subframe = { { 0, (async_fun_t) &fun##_async_, 0, 1 }, { __VA_ARGS__ } }; \
@@ -53,12 +54,12 @@ int async_run_stack (hstack_t stack);
 		if (!locals_) return -1;
 
 #define a_Return(/* intptr_t */ x) \
-	async_fixret (*stack_, 1, x); \
+	aRet = x; \
 	hstack_pop (*stack_); \
 	return 0;
 
 #define a_EndR(/* intptr_t */ x) \
-		async_fixret (*stack_, 1, x); \
+		aRet = x; \
 		hstack_pop (*stack_); \
 	} return 0;
 

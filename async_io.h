@@ -1,3 +1,5 @@
+/* Cyril Nikolaev */
+
 #ifndef async_io_h__
 #define async_io_h__
 

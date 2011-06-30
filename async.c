@@ -3,9 +3,10 @@
 
 #define ASSERT assert
 
-int async_run_stack (hstack_t stack)
+int async_run_stack (hstack_t stack, intptr_t* ret)
 {
 	int status = 0;
+	intptr_t last_ret = 0;
 	
 	struct async_callinfo_t* callee = hstack_nth (stack, 1, NULL);
 
@@ -24,18 +25,25 @@ int async_run_stack (hstack_t stack)
 			status = -1;
 			goto exit;
 			break;
-		case 0:
-			hstack_pop (stack); /* pop top frame */
+		case 0: /* return */
+			last_ret = callee->ret;
+			hstack_pop (stack); /* pop just used frame */
 			callee = hstack_nth (stack, 1, NULL);
+				
+			if (callee)
+			{ /* pass the return value */
+				callee->ret = last_ret;
+			}
+				
 			break;
-		case 1:
+		case 1: /* junction */
 			status = 1;
 			goto exit;
 			break;
-		case 2:
+		case 2: /* call */
 			callee = hstack_top (stack, NULL);
 			break;
-		case 3:
+		case 3: /* continue with */
 			callee = hstack_nth (stack, 1, NULL);
 			break;
 		}
@@ -46,6 +54,11 @@ exit:
 	{
 		ASSERT (stack);
 		hstack_delete(stack);
+	}
+	
+	if (status == 0 && ret)
+	{
+		*ret = last_ret;
 	}
 	
 	return status;

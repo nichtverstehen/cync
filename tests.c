@@ -6,6 +6,7 @@
 #include "hstack.h"
 #include "async.h"
 #include "async_io.h"
+#include "async_rl.h"
 
 #define CHECK(x, msg) do { if (x) ok (msg, __FUNCTION__, __LINE__); \
 	else fail (msg, __FUNCTION__, __LINE__); } while (0)
@@ -142,6 +143,8 @@ void test_hstack ()
 	hstack_delete (st);
 }
 
+/* ASYNC */
+
 struct checker_args_t
 {
 	int checkpoint;
@@ -240,8 +243,8 @@ void test_async ()
 	hstack_t test_stack = hstack_new();
 	async_init_stack (test_stack, async_tester, &check_stack);
 	
-	int test_status = async_run_stack (test_stack);
-	int check_status = async_run_stack (check_stack);
+	int test_status = async_run_stack (test_stack, NULL);
+	int check_status = async_run_stack (check_stack, NULL);
 	
 	printf("\n");
 	CHECK (0 == test_status, "async run test");
@@ -249,6 +252,8 @@ void test_async ()
 	
 	CHECK (status == 4, "async finished");
 }
+
+/* IO */
 
 a_Function (async_reader, { int fd; char* dest; int count; })
 {
@@ -264,32 +269,158 @@ a_Function (async_reader, { int fd; char* dest; int count; })
 		a_Call(async_read, aArg.fd, aArg.dest + aLoc.have_read, aArg.count - aLoc.have_read);
 		if (aRet <= 0)
 		{
-			printf("break %d\n", (int) aRet);
 			break;
 		}
-		
 		aLoc.have_read += aRet;
 	}
 	
-	a_End;
+	a_EndR(aRet < 0 ? -1 : aLoc.have_read);
+}
+
+
+a_Function (async_writer, { int fd; const char* buf; int count; })
+{
+	a_Local {
+		int have_written;
+	};
+	
+	a_Begin;
+	aLoc.have_written = 0;
+	
+	while (aLoc.have_written < aArg.count)
+	{
+		a_Call(async_write, aArg.fd, aArg.buf + aLoc.have_written, aArg.count - aLoc.have_written);
+		if (aRet <= 0)
+		{
+			break;
+		}
+		aLoc.have_written += aRet;
+	}
+	
+	a_EndR(aRet < 0 ? -1 : aLoc.have_written);
 }
 
 void test_io()
 {
-	int fd = open("a", O_RDONLY);
-	if (fd < 0) return;
+	static const char testline[] = "123456789\n123";
+	int pipes[2];
+	pipe (&pipes);
+	int child = fork ();
+	if (child == 0)
+	{
+		close (pipes[0]);
+		sleep (1);
+		write (pipes[1], testline, countof(testline));
+		close (pipes[1]);
+		exit (0);
+	}
+	close (pipes[1]);
+	int fd = pipes [0];
 	
-	char str[129];
+	char str [129];
 	hstack_t astack = hstack_new ();
 	async_init_stack (astack, async_reader, fd, str, 128);
 	
 	int r = async_ioloop (astack);
 	
-	CHECK (r >= 0, "ioloop");
+	CHECK (r >= 0, "ioloop read");
+	//CHECK (strncmp (testline, str, countof(testline)) == 0, "read data");
+	
 	str[128] = 0;
 	printf ("%s\n", str);
 	
+	close (fd);
+	waitpid(child, NULL, 0);
+	
+	/* writing */
+	pipe (&pipes);
+	child = fork ();
+	if (child == 0)
+	{
+		close (pipes[1]);
+		sleep (1);
+		char buf[128];
+		int r = read (pipes[0], buf, countof(buf));
+		if (r > 0)
+		{
+			printf("%s\n", buf);
+			if (0 != strncmp(testline, buf, r))
+			{
+				r = -2;
+			}
+		}
+		
+		close (pipes[0]);
+		exit (r);
+	}
+	
+	astack = hstack_new ();
+	async_init_stack (astack, async_writer, pipes[1], testline, countof(testline));
+	r = async_ioloop (astack);
+	
+	CHECK (r >= 0, "ioloop write");
+	
+	int result;
+	waitpid(child, &result, 0);
+	r = WEXITSTATUS(result);
+	CHECK (r == countof(testline), "written data");
+	
 	close(fd);
+}
+
+/* ARL */
+a_Function (async_readliner, { int fd; char* dest; int count; ssize_t* status; })
+{
+	a_Local {
+		AMY* my;
+	};
+	
+	a_Begin;
+	aLoc.my = arl_fromfd(aArg.fd);
+	
+	a_Call(arl_readline, aLoc.my, aArg.dest, aArg.count);
+	
+	int status = aRet;
+	if( aArg.status )
+	{
+		*aArg.status = status;
+	}
+	
+	a_EndR(status);
+}
+
+void test_arl()
+{
+	static const char testline[] = "123456789\n123";
+	int pipes[2];
+	pipe (&pipes);
+	int child = fork ();
+	if (child == 0)
+	{
+		close (pipes[0]);
+		sleep (1);
+		write (pipes[1], testline, countof(testline));
+		close (pipes[1]);
+		exit (0);
+	}
+	close (pipes[1]);
+	int fd = pipes [0];
+	
+	char str [129];
+	hstack_t astack = hstack_new ();
+	ssize_t status;
+	async_init_stack (astack, async_readliner, fd, str, 128, &status);
+	
+	int r = async_ioloop (astack);
+	
+	CHECK (r >= 0, "ioloop read");
+	CHECK (status == 10 && strncmp (testline, str, 10) == 0, "read data");
+	
+	str[status] = 0;
+	printf ("%s\n", str);
+	
+	close (fd);
+	waitpid(child, NULL, 0);
 }
 
 int main (int argc, void** argv)
@@ -297,8 +428,10 @@ int main (int argc, void** argv)
 	test_mlist ();
 	test_hstack ();
 	test_async ();
-	test_io ();
+	//test_io ();
+	test_arl ();
 	
 	fprintf (stderr, "SUCCESS\n");
 	exit (0);
 }
+

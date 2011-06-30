@@ -1,3 +1,4 @@
+/* Cyril Nikolaev */
 #ifndef hstack_h__
 #define hstack_h__
 

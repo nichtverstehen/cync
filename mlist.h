@@ -1,3 +1,4 @@
+/* Cyril Nikolaev */
 #ifndef mlist_h__
 #define mlist_h__
 
