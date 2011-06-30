@@ -91,8 +91,8 @@ int cat_file (int client, const char* filename)
 
 int is_safe_filename(const char* filename)
 {
-	// should check also for ../
-	return filename[0] != '/';
+	// probably some cases are not handled
+	return filename[0] != '/' && strstr(filename, "/../") == 0 && strncmp(filename, "../", 3) != 0;
 }
 
 /* process a command from client */
@@ -106,7 +106,7 @@ int process_client_line (int client, MY* my_client)
 	if (MYRL_RES (r) == -1 && MYRL_ERR (r) == 1)
 	{
 		// overflow, skip it
-		myrl_skipline (my_client);
+		errno = E2BIG;
 		return 1;
 	}
 	
@@ -133,6 +133,11 @@ int process_client_line (int client, MY* my_client)
 				return 1;
 			}
 		}
+		else 
+		{
+			errno = EACCES;
+		}
+
 	}
 	
 	return -1;
