@@ -18,6 +18,7 @@ int async_run_stack (hstack_t stack, intptr_t* ret)
 		}
 		
 		int r = callee->fun (&stack, callee);
+		callee = hstack_nth (stack, r == 2 ? 2 : 0, NULL); /* stack may be reallocated */
 		
 		switch (r)
 		{

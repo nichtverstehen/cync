@@ -33,7 +33,7 @@ static int async_ioloop_worker()
 		if (nfds == -1) return -1;
 		
 		size_t i, proc;
-		for (i = 0, proc = 0; i < list_len && proc < nfds; ++i, ++proc)
+		for (i = 0, proc = 0; i < list_len && proc < nfds; ++i)
 		{
 			if (s_pollfd_list[i].revents != 0)
 			{
@@ -41,6 +41,7 @@ static int async_ioloop_worker()
 				int cont_status = async_run_stack (s_waiters[i], NULL);
 				
 				if (cont_status < 0) status = -1;
+				++proc;
 			}
 		}
 		
@@ -151,12 +152,7 @@ a_FunctionH (async_write, { int fildes; const void *buf; size_t nbyte; })
 	aLoc.pollfd.revents = 0;
 	a_Call (async_waitfor, &aLoc.pollfd);
 	
-	if (aLoc.pollfd.revents & POLLHUP)
-	{
-		a_Return(0);
-	}
-	
-	if (aLoc.pollfd.revents & (POLLERR|POLLNVAL))
+	if (aLoc.pollfd.revents & (POLLHUP|POLLERR|POLLNVAL))
 	{
 		a_Return(-1);
 	}

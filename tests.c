@@ -391,7 +391,7 @@ a_Function (async_readliner, { int fd; char* dest; int count; ssize_t* status; }
 
 void test_arl()
 {
-	static const char testline[] = "123456789\n123";
+	static const char testline[] = "12345678901234567890123456789\n123";
 	int pipes[2];
 	pipe (&pipes);
 	int child = fork ();
@@ -414,7 +414,7 @@ void test_arl()
 	int r = async_ioloop (astack);
 	
 	CHECK (r >= 0, "ioloop read");
-	CHECK (status == 10 && strncmp (testline, str, 10) == 0, "read data");
+	CHECK (status == 30 && strncmp (testline, str, 30) == 0, "read data");
 	
 	str[status] = 0;
 	printf ("%s\n", str);

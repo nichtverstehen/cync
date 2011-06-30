@@ -96,7 +96,7 @@ a_FunctionH (arl_readline, { AMY* my; char* buf; size_t len; })
 		
 		if (aLoc.r == 2) /* buffer full */
 		{
-			return -2;
+			return aArg.len;
 		}
 	
 		if (aLoc.r == 1) /* no line boundary */
@@ -111,6 +111,6 @@ a_FunctionH (arl_readline, { AMY* my; char* buf; size_t len; })
 		}
 	}
 	while (aLoc.r != 0);
-	
+
 	a_EndR(aLoc.buf_pos - aArg.buf);
 }

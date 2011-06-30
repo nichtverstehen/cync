@@ -14,6 +14,7 @@ struct async_callinfo_t
 	async_fun_t fun;
 	intptr_t ret;
 	int has_locals;
+	const char* fname;
 };
 
 /* empty global fallback locals struct */
@@ -27,6 +28,12 @@ int async_run_stack (hstack_t stack, intptr_t* ret);
 		struct fun##_frame_t_ subframe = { { 0, (async_fun_t) &fun##_async_, 0, 1 }, { __VA_ARGS__ } }; \
 		hstack_push (hstack, &subframe); \
 		hstack_push0 (hstack, 0); /* dummy locals */ \
+	} while (0)
+
+#define async_start(fun, /* int* */ pstatus, /* intptr_t* */ preturn, ...) do { \
+		hstack_t newstack_ = hstack_new (); \
+		async_init_stack(newstack_, fun, __VA_ARGS__); \
+		*pstatus = async_run_stack(newstack_, preturn); \
 	} while (0)
 
 #define aStack (*stack_)
@@ -51,7 +58,8 @@ int async_run_stack (hstack_t stack, intptr_t* ret);
 	switch (frame_->callee.line) { case 0:;\
 		if (frame_->callee.has_locals) hstack_pop (*stack_); /* dummy locals */ \
 		locals_ = hstack_push0 (*stack_, sizeof (struct async_locals_t_)); \
-		if (!locals_) return -1;
+		if (!locals_) return -1; \
+		frame_ = hstack_nth(*stack_, 1, NULL);
 
 #define a_Return(/* intptr_t */ x) \
 	aRet = x; \
@@ -69,7 +77,7 @@ int async_run_stack (hstack_t stack, intptr_t* ret);
 
 #define a_Call(fun, ...) { \
 		frame_->callee.line = __LINE__; \
-		struct fun##_frame_t_ subframe = { { 0, (async_fun_t) &fun##_async_, 0, 0 }, { __VA_ARGS__ } }; \
+		struct fun##_frame_t_ subframe = { { 0, (async_fun_t) &fun##_async_, 0, 0, #fun }, { __VA_ARGS__ } }; \
 		if (!hstack_push (*stack_, &subframe)) return -1; \
 		return 2; \
 	}; case __LINE__:
