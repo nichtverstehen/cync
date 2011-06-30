@@ -5,7 +5,7 @@ import socket
 import time
 import os
 
-p = subprocess.Popen(["./myserver1", "1100"])
+p = subprocess.Popen(["./myserver2", "1100"])
 if p is None: exit()
 
 for fn in ['foo', 'bar', 'caz']:
