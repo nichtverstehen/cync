@@ -423,7 +423,7 @@ void test_arl()
 	waitpid(child, NULL, 0);
 }
 
-int main (int argc, void** argv)
+int main (int argc, char** argv)
 {
 	test_mlist ();
 	test_hstack ();
