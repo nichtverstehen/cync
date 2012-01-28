@@ -17,10 +17,10 @@ int async_run_stack (hstack_t stack, intptr_t* ret)
 			goto exit;
 		}
 		
-		int r = callee->fun (&stack, callee);
-		callee = hstack_nth (stack, r == 2 ? 2 : 0, NULL); /* stack may be reallocated */
+		async_result_t r = callee->fun (&stack, callee);
+		callee = hstack_nth (stack, r.status == 2 ? 2 : 0, NULL); /* stack may be reallocated */
 		
-		switch (r)
+		switch (r.status)
 		{
 		case -1:
 			status = -1;
@@ -46,6 +46,10 @@ int async_run_stack (hstack_t stack, intptr_t* ret)
 			break;
 		case 3: /* continue with */
 			callee = hstack_nth (stack, 1, NULL);
+			break;
+		default:
+			status = -1;
+			goto exit;
 			break;
 		}
 	}

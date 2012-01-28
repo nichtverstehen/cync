@@ -6,7 +6,8 @@
 #include "hstack.h"
 
 typedef int line_t;
-typedef int (*async_fun_t) (hstack_t*, void*);
+typedef struct { int status; } async_result_t;
+typedef async_result_t (*async_fun_t) (hstack_t*, void*);
 
 struct async_callinfo_t 
 {
@@ -45,54 +46,63 @@ int async_run_stack (hstack_t stack, intptr_t* ret);
 	struct name##_frame_t_ { \
 		struct async_callinfo_t callee; \
 		struct args usr; }; \
-	int name##_async_ (hstack_t* stack_, struct name##_frame_t_* frame_)
+	async_result_t name##_async_ (hstack_t* stack_, struct name##_frame_t_* frame_)
 
 #define a_FunctionH(name, args) /* args unused */ \
-	int name##_async_ (hstack_t* stack_, struct name##_frame_t_* frame_)
+	async_result_t name##_async_ (hstack_t* stack_, struct name##_frame_t_* frame_)
 
 #define a_Local \
 	struct async_locals_t_
  
 #define a_Begin \
 	struct async_locals_t_* locals_ = hstack_top (*stack_, NULL); \
+	async_result_t result_ = { 0 }; \
 	switch (frame_->callee.line) { case 0:;\
 		if (frame_->callee.has_locals) hstack_pop (*stack_); /* dummy locals */ \
 		locals_ = hstack_push0 (*stack_, sizeof (struct async_locals_t_)); \
-		if (!locals_) return -1; \
+		if (!locals_) { result_.status = -1; return result_; } \
 		frame_ = hstack_nth(*stack_, 1, NULL);
 
 #define a_Return(/* intptr_t */ x) \
 	aRet = x; \
 	hstack_pop (*stack_); \
-	return 0;
+	result_.status = 0; \
+	return result_;
 
 #define a_EndR(/* intptr_t */ x) \
 		aRet = x; \
 		hstack_pop (*stack_); \
-	} return 0;
+	} \
+	result_.status = 0; \
+	return result_;
 
 #define a_End \
 		hstack_pop (*stack_); \
-	} return 0;
+	} \
+	result_.status = 0; \
+	return result_;
 
 #define a_Call(fun, ...) { \
 		frame_->callee.line = __LINE__; \
 		struct fun##_frame_t_ subframe = { { 0, (async_fun_t) &fun##_async_, 0, 0, #fun }, { __VA_ARGS__ } }; \
-		if (!hstack_push (*stack_, &subframe)) return -1; \
-		return 2; \
+		if (!hstack_push (*stack_, &subframe)) { result_.status = -1; return result_; } \
+		result_.status = 2; \
+		return result_; \
 	}; case __LINE__:
 
 /* take care of your stack */
 #define a_Continue(hstack, ret) { \
-		if (async_fixret (hstack, 0, ret) < 0) return -1; \
+		if (async_fixret (hstack, 0, ret) < 0) { result_.status = -1; return result_; } \
 		frame_->callee.line = __LINE__; \
 		*stack_ = hstack; \
-		return 3; \
+		result_.status = 3; \
+		return result_; \
 	}; case __LINE__:
 
 #define a_Junction() { \
 		frame_->callee.line = __LINE__; \
-		return 1; \
+		result_.status = 1; \
+		return result_; \
 	}; case __LINE__:
 
 int async_fixret (hstack_t hstack, size_t depth, intptr_t ret);
