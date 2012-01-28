@@ -1,0 +1,8 @@
+syntax: glob
+*.a
+*.o
+*.so
+*.dSYM
+myserver2
+test_async
+.DS_Store
