@@ -9,6 +9,8 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <stdio.h>
+#include <sys/uio.h>
+#include <unistd.h>
 
 #include "myreadline.h"
 #include "async_rl.h"

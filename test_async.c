@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "mlist.h"
 #include "hstack.h"
@@ -304,7 +306,7 @@ void test_io()
 {
 	static const char testline[] = "123456789\n123";
 	int pipes[2];
-	pipe (&pipes);
+	pipe (pipes);
 	int child = fork ();
 	if (child == 0)
 	{
@@ -333,7 +335,7 @@ void test_io()
 	waitpid(child, NULL, 0);
 	
 	/* writing */
-	pipe (&pipes);
+	pipe (pipes);
 	child = fork ();
 	if (child == 0)
 	{
@@ -393,7 +395,7 @@ void test_arl()
 {
 	static const char testline[] = "12345678901234567890123456789\n123";
 	int pipes[2];
-	pipe (&pipes);
+	pipe (pipes);
 	int child = fork ();
 	if (child == 0)
 	{
@@ -423,7 +425,7 @@ void test_arl()
 	waitpid(child, NULL, 0);
 }
 
-int main (int argc, void** argv)
+int main (int argc, char** argv)
 {
 	test_mlist ();
 	test_hstack ();

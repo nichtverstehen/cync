@@ -8,7 +8,9 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <unistd.h>
 #include "myreadline.h"
+#include <stdio.h>
 
 #define LISTEN_QUEUE_SIZE 1
 #define MAX_FILENAME 1024

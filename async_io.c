@@ -55,6 +55,8 @@ static int async_ioloop_worker()
 			}
 		}
 	}
+	
+	return status;
 }
 
 int async_ioloop (hstack_t mainstack)
