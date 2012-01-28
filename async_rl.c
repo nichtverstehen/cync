@@ -11,7 +11,7 @@
 #include <unistd.h>
 #include "async_io.h"
 
-#define RL_BUFFER_SIZE 10
+#define RL_BUFFER_SIZE 1024
 
 #define min(a, b) ((a)<(b) ? (a) : (b))
 
@@ -96,7 +96,7 @@ a_FunctionH (arl_readline, { AMY* my; char* buf; size_t len; })
 		
 		if (aLoc.r == 2) /* buffer full */
 		{
-			return aArg.len;
+			a_Return(aArg.len);
 		}
 	
 		if (aLoc.r == 1) /* no line boundary */
