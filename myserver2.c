@@ -11,8 +11,8 @@
 #include <stdio.h>
 #include <sys/uio.h>
 #include <unistd.h>
+#include <stdio.h>
 
-#include "myreadline.h"
 #include "async_rl.h"
 #include "async_io.h"
 
@@ -25,14 +25,7 @@
 void usage ()
 {
 	static const char USAGE_LINE[] = "USAGE: myserver [ <port> | -h ]. Default port is 1025.\n";
-	MY* my_out = myrl_fromfd (2);
-	if (!my_out)
-	{
-		return;
-	}
-	
-	myrl_writeline (my_out, USAGE_LINE, countof (USAGE_LINE));
-	myrl_close (my_out);
+	fprintf(stderr, "%s", USAGE_LINE);
 }
 
 /* feed a buffer to fd */
